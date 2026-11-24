@@ -10,10 +10,10 @@ interface Waiter { ticket: Ticket, done: (a: Answer) => void }
 export function createReception ({ waitMs = 25000 }: { waitMs?: number } = {}) {
   const waiting = new Map<string, Waiter>()
 
-  function ask (question: string, language: string): Promise<Answer> {
+  function ask (question: string, language: string, ttlMs = waitMs): Promise<Answer> {
     const ticket: Ticket = { id: randomUUID(), question, language, createdAt: Date.now() }
     return new Promise((resolve) => {
-      const timer = setTimeout(() => { waiting.delete(ticket.id); resolve({ answer: NO_ANSWER }) }, waitMs)
+      const timer = setTimeout(() => { waiting.delete(ticket.id); resolve({ answer: NO_ANSWER }) }, ttlMs)
       waiting.set(ticket.id, { ticket, done: (a) => { clearTimeout(timer); resolve(a) } })
     })
   }

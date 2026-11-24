@@ -15,6 +15,11 @@ export interface VoicePreset {
   voiceId?: string
   llm?: string
   maxDurationSeconds?: number
+  /** Replaces the default "Voice rules" block appended to the prompt (e.g. for a chattier agent). */
+  voiceRules?: string
+  /** Cap on LLM output tokens per reply. Unset leaves ElevenLabs' default (no cap). */
+  maxTokens?: number
 }
 
-export type ResolvedPreset = Required<Omit<VoicePreset, 'voiceId' | 'llm' | 'greeting'>> & Pick<VoicePreset, 'voiceId' | 'llm' | 'greeting'>
+type Optional = 'voiceId' | 'llm' | 'greeting' | 'voiceRules' | 'maxTokens'
+export type ResolvedPreset = Required<Omit<VoicePreset, Optional>> & Pick<VoicePreset, Optional>

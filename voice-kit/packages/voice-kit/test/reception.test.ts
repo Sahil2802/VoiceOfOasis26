@@ -36,6 +36,14 @@ describe('reception tickets', () => {
     expect(r.pending()).toEqual([])
   })
 
+  it('ask() can override the wait per call, so a ticket outlives the default', async () => {
+    const r = createReception({ waitMs: 10 })
+    const pending = r.ask('Escort please', 'en', 200)
+    await new Promise((resolve) => setTimeout(resolve, 60))
+    expect(r.pending()).toHaveLength(1)
+    expect(await pending).toEqual({ answer: 'none yet' })
+  })
+
   it('reply() on an unknown or expired ticket returns false', async () => {
     const r = createReception({ waitMs: 10 })
     await r.ask('Where?', 'en')
