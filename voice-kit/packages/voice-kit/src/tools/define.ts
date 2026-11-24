@@ -15,6 +15,8 @@ export interface ClientToolSpec {
   timeoutSecs?: number
   /** Make the agent say something ("one moment…") before a slow tool runs. */
   speakFirst?: boolean
+  /** Run on ElevenLabs' servers by calling this URL (POST, JSON body) instead of in the browser. */
+  webhook?: { url: string, headers?: Record<string, string> }
 }
 
 export interface ElevenClientTool {
@@ -47,8 +49,37 @@ function toProperty ({ type, description, enum: values }: ToolParam) {
   return values ? { type, description, enum: values } : { type, description }
 }
 
-/** Convert a tool spec into the ElevenAgents `client` tool config. */
-export function toElevenTool (spec: ClientToolSpec): ElevenClientTool {
+export interface ElevenWebhookTool {
+  type: 'webhook'
+  name: string
+  description: string
+  responseTimeoutSecs: number
+  preToolSpeech: 'force' | 'auto'
+  apiSchema: { url: string, method: 'POST', requestHeaders?: Record<string, string>, requestBodySchema: ElevenClientTool['parameters'] }
+}
+
+const bodySchema = (entries: Array<[string, ToolParam]>): ElevenClientTool['parameters'] => ({
+  type: 'object',
+  required: entries.filter(([, p]) => !p.optional).map(([k]) => k),
+  properties: Object.fromEntries(entries.map(([k, p]) => [k, toProperty(p)]))
+})
+
+function toWebhookTool (spec: ClientToolSpec & { webhook: NonNullable<ClientToolSpec['webhook']> }): ElevenWebhookTool {
+  return {
+    type: 'webhook',
+    name: spec.name,
+    description: spec.description,
+    responseTimeoutSecs: spec.timeoutSecs ?? 20,
+    preToolSpeech: spec.speakFirst ? 'force' : 'auto',
+    apiSchema: { url: spec.webhook.url, method: 'POST', requestHeaders: spec.webhook.headers, requestBodySchema: bodySchema(Object.entries(spec.params)) }
+  }
+}
+
+/** Convert a tool spec into the ElevenAgents `client` (browser) or `webhook` (server) tool config. */
+export function toElevenTool (spec: ClientToolSpec & { webhook: object }): ElevenWebhookTool
+export function toElevenTool (spec: ClientToolSpec): ElevenClientTool
+export function toElevenTool (spec: ClientToolSpec): ElevenClientTool | ElevenWebhookTool {
+  if (spec.webhook) return toWebhookTool({ ...spec, webhook: spec.webhook })
   const entries = Object.entries(spec.params)
   return {
     type: 'client',
@@ -57,10 +88,6 @@ export function toElevenTool (spec: ClientToolSpec): ElevenClientTool {
     expectsResponse: true,
     responseTimeoutSecs: spec.timeoutSecs ?? 10,
     forcePreToolSpeech: spec.speakFirst ?? false,
-    parameters: {
-      type: 'object',
-      required: entries.filter(([, p]) => !p.optional).map(([k]) => k),
-      properties: Object.fromEntries(entries.map(([k, p]) => [k, toProperty(p)]))
-    }
+    parameters: bodySchema(entries)
   }
 }

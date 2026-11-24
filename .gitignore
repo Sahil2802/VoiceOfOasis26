@@ -1,4 +1,5 @@
 /.impeccable
 *.md
 !README.md
-!CLAUDE.md
+!CLAUDE.md!docs/*.md
+!docs/*.md

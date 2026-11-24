@@ -3,7 +3,7 @@ import { buildAgentConfig, type AgentConfigBody } from '../presets/build.js'
 import type { ResolvedPreset } from '../presets/types.js'
 
 type Client = Pick<ElevenLabsClient, 'conversationalAi'>
-export type Channel = 'web' | 'phone' | 'avatar'
+export type Channel = 'web' | 'phone' | 'avatar' | 'robot'
 
 const AVATAR_NOTE = '\n# Avatar mode\nYou are shown as a talking avatar and cannot book, send links or run tools here. Answer from your knowledge; for bookings, give the DSO number 600 59 55 57.'
 
@@ -24,10 +24,21 @@ function avatarVariant (body: AgentConfigBody): AgentConfigBody {
   }
 }
 
+/** The AgiBot X2 bridge streams 16 kHz PCM both ways; keeps the agent's tools (webhooks run server-side). */
+function robotVariant (body: AgentConfigBody): AgentConfigBody {
+  const cc = body.conversationConfig
+  return {
+    name: `${body.name} (robot)`,
+    tags: [...body.tags.map((t) => `${t}:robot`), 'voice-kit'],
+    conversationConfig: { ...cc, tts: { ...cc.tts, agentOutputAudioFormat: 'pcm_16000' }, asr: { userInputAudioFormat: 'pcm_16000' } } as typeof cc
+  }
+}
+
 /** Phone calls via Twilio need 8 kHz μ-law in and out; avatars cannot run tools; web uses the defaults. */
 export function forChannel (body: AgentConfigBody, channel: Channel): AgentConfigBody {
   if (channel === 'web') return body
   if (channel === 'avatar') return avatarVariant(body)
+  if (channel === 'robot') return robotVariant(body)
   const cc = body.conversationConfig
   return {
     name: `${body.name} (phone)`,

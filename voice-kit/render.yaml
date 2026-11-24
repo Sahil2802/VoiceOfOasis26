@@ -18,3 +18,22 @@ services:
         sync: false
       - key: NODE_VERSION
         value: "22"
+  # Ghost Protocol: demo app + receptionist queue. One instance only: tickets live in memory.
+  - type: web
+    name: ghost-protocol
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build -w @workhub/voice-kit && npm run build -w demo
+    startCommand: cd apps/demo && npx next start -p $PORT
+    healthCheckPath: /reception
+    envVars:
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: RECEPTION_SECRET
+        sync: false
+      - key: ROBOT_TOKEN
+        sync: false
+      - key: AGENT_ID_GHOST_NAVIGATOR
+        sync: false
+      - key: NODE_VERSION
+        value: "22"
