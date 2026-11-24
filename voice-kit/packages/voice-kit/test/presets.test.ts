@@ -122,18 +122,30 @@ describe('robot channel + webhook tools', async () => {
     expect(preset.systemPrompt).toMatch(/Never say "follow me"/)
   })
 
-  it('is a chatty humanoid guide: own voice rules replace the 1-2 sentence default and raise the token cap', () => {
+  it('is quick by default: own voice rules replace the default, short replies, capped output', () => {
     const text = body.conversationConfig.agent.prompt.prompt
-    expect(text).toMatch(/3 to 5 sentences/)
+    expect(text).toMatch(/one sentence, two at most/)
+    expect(text).not.toMatch(/3 to 5 sentences/)
     expect(text).not.toMatch(/1-2 sentences\)/)
-    expect(body.conversationConfig.agent.prompt).toMatchObject({ maxTokens: 2048 })
+    expect(body.conversationConfig.agent.prompt).toMatchObject({ maxTokens: 512 })
     expect(text).toMatch(/humanoid/)
     expect(text).not.toMatch(/wheels/)
   })
 
+  it('opens with a short greeting', () => {
+    expect(preset.firstMessage.en!.split(/[.?!]/).filter(Boolean).length).toBeLessThanOrEqual(2)
+  })
+
+  it('addresses one person per message and tells speakers apart by tag or context', () => {
+    expect(preset.systemPrompt).toMatch(/exactly ONE/)
+    expect(preset.systemPrompt).toMatch(/Never address two people in one message/)
+    for (const tag of ['[visitor]', '[operator]', '[staff]', '[ROBOT EVENT]']) expect(preset.systemPrompt).toContain(tag)
+    expect(preset.systemPrompt).toMatch(/person you addressed last/)
+  })
+
   it('asks the operator by voice, then staff, and never guesses a location', () => {
-    expect(preset.systemPrompt).toMatch(/Operator, can you take us to the nearest reception desk or staff member/)
-    expect(preset.systemPrompt).toMatch(/you never guess where something is/)
+    expect(preset.systemPrompt).toMatch(/Operator, please take us to the nearest reception or staff member/)
+    expect(preset.systemPrompt).toMatch(/never guess where anything is/)
     expect(preset.systemPrompt).toMatch(/Only repeat what staff told you/)
   })
 
