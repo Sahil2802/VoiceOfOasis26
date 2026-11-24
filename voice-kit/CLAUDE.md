@@ -31,3 +31,4 @@ cd scripts && npx tsx --env-file=../.env.local smoke-live.mts
 - The core must work with only `ELEVENLABS_API_KEY` (ADR 0002). Twilio and LiveAvatar are add-ons.
 - Never commit secrets. Keys live in `.env.local` (gitignored) and in the hosting providers' env.
 - English-primary agents must use `eleven_flash_v2` (API rule). Bilingual presets use a non-English base (ADR 0004).
+npm run build -w packages/voice-kit
