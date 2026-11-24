@@ -9,8 +9,8 @@ Runs on the robot's PC2 inside the MangoBot container. Connects the robot's mic 
 | `ghost_sdk.py` | AimDK v1.0.0 calls: `SetMcPresetMotion`, `/face_ui_proxy/play_emoji`, `SetVolume`/`GetVolume`, `SetMicSourceRequest` |
 | `ghost_actions.py` | Agent tool → SDK mapping (gesture/motion ids from the AgiBot docs) |
 | `ghost_events.py` | Polls our server for operator "Arrived" taps |
-| `aimdk-v1.0.0-interfaces.md` | Every interface used, with its source |
-| `robot-runbook.md` | Step-by-step for the robot slot |
+| `run_on_robot.sh` | One-command launcher for PC2 (env checks, deps, fallback) |
+| `docs/robot-runbook.md` | Step-by-step for the robot slot |
 
 ## Run (on PC2, save under /home/agi only)
 ```bash

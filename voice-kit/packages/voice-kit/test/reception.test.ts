@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import { createReception } from '../src/reception/tickets.js'
+import { createRobotEvents } from '../src/reception/events.js'
+
+describe('robot events', () => {
+  it('since(after) returns only newer events and the current seq', () => {
+    const e = createRobotEvents()
+    e.push('Lobby')
+    e.push('Techno Point', true)
+    expect(e.since(0).events.map((x) => x.stop)).toEqual(['Lobby', 'Techno Point'])
+    expect(e.since(1)).toEqual({ seq: 2, events: [{ seq: 2, stop: 'Techno Point', finished: true }] })
+    expect(e.since(2).events).toEqual([])
+  })
+
+  it('keeps only the last `max` events', () => {
+    const e = createRobotEvents(2)
+    ;['a', 'b', 'c'].forEach((s) => e.push(s))
+    expect(e.since(0).events.map((x) => x.stop)).toEqual(['b', 'c'])
+  })
+})
 
 describe('reception tickets', () => {
   it('ask() resolves with the answer once reply() is called', async () => {

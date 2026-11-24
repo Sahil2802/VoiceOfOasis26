@@ -1,7 +1,8 @@
 import 'server-only'
-import { createReception, type Reception } from '@workhub/voice-kit/next'
+import { createReception, createRobotEvents, type Reception, type RobotEvents } from '@workhub/voice-kit/next'
 
-const g = globalThis as unknown as { __reception?: Reception }
+const g = globalThis as unknown as { __reception?: Reception, __robotEvents?: RobotEvents }
+export const robotEvents = (g.__robotEvents ??= createRobotEvents())
 /** One shared queue per process (survives dev hot reloads). Needs a single long-running server, not serverless. */
 export const reception = (g.__reception ??= createReception())
 
