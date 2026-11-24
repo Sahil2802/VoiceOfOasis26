@@ -10,6 +10,7 @@ export const research = createResearchClient()
 /** Optional: pin agent IDs per preset (AGENT_ID_HALA=agent_…); otherwise they are auto-provisioned. */
 export const agentIds: Record<string, string | undefined> = {
   navigator: process.env.AGENT_ID_NAVIGATOR,
+  'ghost-navigator': process.env.AGENT_ID_GHOST_NAVIGATOR,
   'soft-landing': process.env.AGENT_ID_SOFT_LANDING,
   hala: process.env.AGENT_ID_HALA,
   assistant: process.env.AGENT_ID_ASSISTANT

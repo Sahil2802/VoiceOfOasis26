@@ -19,7 +19,7 @@ describe('definePreset', () => {
 
 describe('built-in presets', () => {
   it('ships the three hackathon challenges plus a generic assistant', () => {
-    expect(Object.keys(presets).sort()).toEqual(['assistant', 'hala', 'navigator', 'soft-landing'])
+    expect(Object.keys(presets).sort()).toEqual(['assistant', 'ghost-navigator', 'hala', 'navigator', 'soft-landing'])
     expect(getPreset('nope')).toBeUndefined()
   })
 
@@ -94,5 +94,34 @@ describe('forChannel', async () => {
     // LiveAvatar rejects anything but 24 kHz PCM (API error 4000)
     expect((avatar.conversationConfig.tts as { agentOutputAudioFormat?: string }).agentOutputAudioFormat).toBe('pcm_24000')
     expect((avatar.conversationConfig as { asr?: { userInputAudioFormat?: string } }).asr?.userInputAudioFormat).toBe('pcm_24000')
+  })
+})
+
+describe('robot channel + webhook tools', async () => {
+  const { forChannel } = await import('../src/server/agents.js')
+  const { ghostNavigator } = await import('../src/presets/ghost-navigator.js')
+  const preset = ghostNavigator({ receptionUrl: 'https://r.example/api/reception/ask', secret: 's3' })
+  const body = buildAgentConfig(preset)
+
+  it('robot variant uses PCM 16 kHz both ways and its own agent name', () => {
+    const robot = forChannel(body, 'robot')
+    expect(robot.name).toMatch(/\(robot\)$/)
+    expect((robot.conversationConfig.tts as { agentOutputAudioFormat?: string }).agentOutputAudioFormat).toBe('pcm_16000')
+    expect(((robot.conversationConfig as Record<string, any>).asr as { userInputAudioFormat?: string }).userInputAudioFormat).toBe('pcm_16000')
+  })
+
+  it('ghost-navigator has exactly one webhook tool with the secret header and a 30 s timeout', () => {
+    const tools = body.conversationConfig.agent.prompt.tools as Array<Record<string, any>>
+    expect(tools).toHaveLength(1)
+    expect(tools[0]).toMatchObject({ type: 'webhook', name: 'ask_reception', responseTimeoutSecs: 30, preToolSpeech: 'force' })
+    expect(tools[0].apiSchema).toMatchObject({ url: 'https://r.example/api/reception/ask', method: 'POST', requestHeaders: { 'x-reception-secret': 's3' } })
+    expect(Object.keys(tools[0].apiSchema.requestBodySchema.properties)).toEqual(['question', 'language'])
+  })
+
+  it('is bilingual, says AI in the greeting and lasts 600 s', () => {
+    expect(preset.languages).toEqual(['en', 'ar'])
+    expect(preset.firstMessage.en).toMatch(/AI/)
+    expect(preset.maxDurationSeconds).toBe(600)
+    expect(preset.systemPrompt).toMatch(/Never say follow me/)
   })
 })
