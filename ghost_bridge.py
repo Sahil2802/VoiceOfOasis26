@@ -4,7 +4,8 @@
   + head touch -> greeting
   + operator arrival events.
 
-Copy BOTH files (and ghost_events.py) into /home/agi/<team folder> on PC2, then:
+Copy ALL the files (elevenlabs_robot_bridge.py, ghost_*.py, run_on_robot.sh) into your own folder on the robot, then
+prefer ./run_on_robot.sh (sets up ROS/AimDK paths). RAW_MIC=0 falls back to the wake-word microphone. Manually:
   export ELEVENLABS_AGENT_ID=...
   export GHOST_SERVER=https://<our server>     # optional: enables operator "Arrived" taps
   export ROBOT_TOKEN=...                        # matches the server's ROBOT_TOKEN
@@ -22,6 +23,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import elevenlabs_robot_bridge as base  # noqa: E402
 from ghost_actions import dispatch  # noqa: E402
+from ghost_audio import mix_to_mono  # noqa: E402
 from ghost_events import EventPoller, http_fetch  # noqa: E402
 from ghost_sdk import AimdkSDK  # noqa: E402
 
@@ -32,10 +34,14 @@ TOUCH_COOLDOWN = 8.0
 
 
 class GhostBridge(base.Bridge):
+    raw_mic = False  # set in __init__; the processed mic is silent until the wake word, the raw one is not
+
     def __init__(self):
         super().__init__()
         self.sdk = AimdkSDK(self)
         self._last_touch = 0.0
+        if os.environ.get("RAW_MIC", "1") == "1":
+            self._start_raw_mic()
         try:
             from aimdk_msgs.msg import TouchState
             self._touch_ok = (TouchState.TOUCH, TouchState.PAT_ONCE, TouchState.PAT_TWICE)
@@ -44,6 +50,29 @@ class GhostBridge(base.Bridge):
         except Exception as e:
             base.log("ghost: head touch unavailable:", e)
         base.log("ghost: gestures", "ON" if GESTURES else "OFF (set ENABLE_GESTURES=1 after MangoBot OK)")
+
+    def _start_raw_mic(self):
+        """AgiBot's recipe (24.11): /aima/hal/audio/capture needs no wake word. Needs HALF_DUPLEX=1: no echo cancellation."""
+        try:
+            from aimdk_msgs.msg import AudioCapture
+            qos = base.QoSProfile(history=base.QoSHistoryPolicy.KEEP_LAST, depth=500,
+                                  reliability=base.QoSReliabilityPolicy.BEST_EFFORT)
+            self.create_subscription(AudioCapture, "/aima/hal/audio/capture", self.on_raw_mic, qos)
+            self.raw_mic = True
+            base.log("ghost: raw microphone (no wake word)", "" if base.HALF_DUPLEX else "- WARNING: set HALF_DUPLEX=1 or it will hear itself")
+        except Exception as e:
+            base.log("ghost: raw microphone unavailable, using the wake-word microphone:", e)
+
+    def on_mic(self, msg):
+        if not self.raw_mic:  # processed (wake-word) stream is ignored once the raw one is on
+            super().on_mic(msg)
+
+    def on_raw_mic(self, msg):
+        if base.HALF_DUPLEX and time.monotonic() < self.speaking_until:
+            return
+        pcm = mix_to_mono(bytes(msg.data.data), msg.info.channels, msg.mic_channels)
+        if pcm:
+            self.mic_q.put(pcm)
 
     def _on_touch(self, msg):
         now = time.monotonic()

@@ -100,7 +100,7 @@ describe('forChannel', async () => {
 describe('robot channel + webhook tools', async () => {
   const { forChannel } = await import('../src/server/agents.js')
   const { ghostNavigator } = await import('../src/presets/ghost-navigator.js')
-  const preset = ghostNavigator({ receptionUrl: 'https://r.example/api/reception/ask', secret: 's3' })
+  const preset = ghostNavigator()
   const body = buildAgentConfig(preset)
 
   it('robot variant uses PCM 16 kHz both ways and its own agent name', () => {
@@ -110,18 +110,60 @@ describe('robot channel + webhook tools', async () => {
     expect(((robot.conversationConfig as Record<string, any>).asr as { userInputAudioFormat?: string }).userInputAudioFormat).toBe('pcm_16000')
   })
 
-  it('ghost-navigator has exactly one webhook tool with the secret header and a 30 s timeout', () => {
-    const tools = body.conversationConfig.agent.prompt.tools as Array<Record<string, any>>
-    expect(tools).toHaveLength(1)
-    expect(tools[0]).toMatchObject({ type: 'webhook', name: 'ask_reception', responseTimeoutSecs: 30, preToolSpeech: 'force' })
-    expect(tools[0].apiSchema).toMatchObject({ url: 'https://r.example/api/reception/ask', method: 'POST', requestHeaders: { 'x-reception-secret': 's3' } })
-    expect(Object.keys(tools[0].apiSchema.requestBodySchema.properties)).toEqual(['question', 'language'])
+  it('ghost-navigator is pure voice: no tools, so nothing to wire on the robot', () => {
+    expect(body.conversationConfig.agent.prompt.tools).toEqual([])
   })
 
-  it('is bilingual, says AI in the greeting and lasts 600 s', () => {
+  it('is bilingual, says AI in both greetings and lasts 900 s', () => {
     expect(preset.languages).toEqual(['en', 'ar'])
     expect(preset.firstMessage.en).toMatch(/AI/)
-    expect(preset.maxDurationSeconds).toBe(600)
-    expect(preset.systemPrompt).toMatch(/Never say follow me/)
+    expect(preset.greeting).toMatch(/AI/)
+    expect(preset.maxDurationSeconds).toBe(900)
+    expect(preset.systemPrompt).toMatch(/Never say "follow me"/)
+  })
+
+  it('is quick by default: own voice rules replace the default, short replies, capped output', () => {
+    const text = body.conversationConfig.agent.prompt.prompt
+    expect(text).toMatch(/one sentence, two at most/)
+    expect(text).not.toMatch(/3 to 5 sentences/)
+    expect(text).not.toMatch(/1-2 sentences\)/)
+    expect(body.conversationConfig.agent.prompt).toMatchObject({ maxTokens: 512 })
+    expect(text).toMatch(/humanoid/)
+    expect(text).not.toMatch(/wheels/)
+  })
+
+  it('opens with a short greeting', () => {
+    expect(preset.firstMessage.en!.split(/[.?!]/).filter(Boolean).length).toBeLessThanOrEqual(2)
+  })
+
+  it('addresses one person per message and tells speakers apart by tag or context', () => {
+    expect(preset.systemPrompt).toMatch(/exactly ONE/)
+    expect(preset.systemPrompt).toMatch(/Never address two people in one message/)
+    for (const tag of ['[visitor]', '[operator]', '[staff]', '[ROBOT EVENT]']) expect(preset.systemPrompt).toContain(tag)
+    expect(preset.systemPrompt).toMatch(/person you addressed last/)
+  })
+
+  it('asks the operator by voice, then staff, and never guesses a location', () => {
+    expect(preset.systemPrompt).toMatch(/Operator, please take us to the nearest reception or staff member/)
+    expect(preset.systemPrompt).toMatch(/never guess where anything is/)
+    expect(preset.systemPrompt).toMatch(/Only repeat what staff told you/)
+  })
+
+  it('other presets keep the default voice rules and have no token cap', () => {
+    const hala = buildAgentConfig(getPreset('hala')!).conversationConfig.agent.prompt
+    expect(hala.prompt).toMatch(/Short answers first \(1-2 sentences\)/)
+    expect(hala).not.toHaveProperty('maxTokens')
+  })
+})
+
+describe('webhook tools', () => {
+  it('serialise with the secret header, timeout and body schema', async () => {
+    const { defineClientTool, toElevenTool } = await import('../src/tools/define.js')
+    const tool = toElevenTool(defineClientTool({
+      name: 'ping', description: 'd', params: { q: { type: 'string', description: 'q' } }, timeoutSecs: 10, speakFirst: true,
+      webhook: { url: 'https://r.example/x', headers: { 'x-s': '1' } }
+    }) as never)
+    expect(tool).toMatchObject({ type: 'webhook', name: 'ping', responseTimeoutSecs: 10, preToolSpeech: 'force' })
+    expect(tool.apiSchema).toMatchObject({ url: 'https://r.example/x', method: 'POST', requestHeaders: { 'x-s': '1' } })
   })
 })

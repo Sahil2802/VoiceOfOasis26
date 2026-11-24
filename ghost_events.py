@@ -5,10 +5,13 @@ import urllib.request
 
 
 def event_to_message(ev: dict) -> dict:
-    tail = " This is the destination." if ev.get("finished") else ""
-    return {"type": "user_message",
-            "text": f"[ROBOT EVENT] The operator confirms we arrived at: {ev['stop']}.{tail} "
-                    "Narrate this stop to the visitor now, briefly, in their language."}
+    if ev.get("finished"):
+        text = (f"[ROBOT EVENT] The operator confirms we arrived at the destination: {ev['stop']}. "
+                "Announce it to the visitor with energy, in their language, then ask if they need anything else.")
+    else:
+        text = (f"[ROBOT EVENT] The operator confirms we arrived at: {ev['stop']}. This is a staff member or reception, "
+                "not the final destination. Now do your ARRIVAL AT STAFF step: introduce yourself and ask them for the directions.")
+    return {"type": "user_message", "text": text}
 
 
 def http_fetch(base: str, token: str):

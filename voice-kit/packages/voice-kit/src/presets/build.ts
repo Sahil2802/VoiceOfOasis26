@@ -15,7 +15,7 @@ const VOICE_RULES = `
 
 function prompt (p: ResolvedPreset): string {
   const facts = p.knowledge.length ? `\n# Knowledge\n${p.knowledge.map((k) => `- ${k}`).join('\n')}` : ''
-  return `${p.systemPrompt.trim()}\n${VOICE_RULES}${facts}`
+  return `${p.systemPrompt.trim()}\n${p.voiceRules ?? VOICE_RULES}${facts}`
 }
 
 function systemTool (name: string, systemToolType: string) {
@@ -50,6 +50,7 @@ export function buildAgentConfig (p: ResolvedPreset) {
       prompt: {
         prompt: prompt(p),
         llm: p.llm ?? DEFAULT_LLM,
+        ...(p.maxTokens ? { maxTokens: p.maxTokens } : {}),
         tools: p.tools.map(toElevenTool),
         builtInTools: {
           endCall: systemTool('end_call', 'end_call'),
