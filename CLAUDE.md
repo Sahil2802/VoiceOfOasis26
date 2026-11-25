@@ -30,6 +30,8 @@ and handing over to a human.
 - Run backend: `uvicorn backend.main:app --reload --port 8000`
 - Public URL: `ngrok http 8000`
 - Tests: `pytest backend/tests`
+- Push Noor's prompt to the live agent (laptop, after any prompt change, before running on the robot):
+  `cd voice-kit && npx tsx --env-file=.env.local scripts/provision-ghost.mts`
 
 # Core Principles
 Simplicity First: Make every change as simple as possible. Impact minimal code.
