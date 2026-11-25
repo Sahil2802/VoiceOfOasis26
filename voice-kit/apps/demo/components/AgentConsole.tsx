@@ -5,6 +5,10 @@ import type { Challenge } from '@/lib/challenges'
 import { EventCard } from './EventCard'
 import { Wave } from './Wave'
 
+const WANDER_MS = 2500
+const WANDER_RANGE = 40 // % of pupil size
+const HOLD_GAZE = { x: 20, y: -35 } // looks up and aside while "thinking"
+
 function Controls ({ agent, error }: { agent: ReturnType<typeof useVoiceAgent>, error: string }) {
   const live = agent.status === 'connected'
   return (
@@ -35,26 +39,62 @@ function Transcript ({ lines }: { lines: Array<{ role: string, text: string }> }
   )
 }
 
+/** Idle pupils drift to a random spot every few seconds; on hold they look up as if thinking. */
+function useGaze (onHold: boolean) {
+  const [gaze, setGaze] = useState({ x: 0, y: 0 })
+  useEffect(() => {
+    if (onHold) { setGaze(HOLD_GAZE); return }
+    const wander = () => setGaze({ x: (Math.random() * 2 - 1) * WANDER_RANGE, y: (Math.random() * 2 - 1) * WANDER_RANGE * 0.6 })
+    const timer = setInterval(wander, WANDER_MS)
+    return () => clearInterval(timer)
+  }, [onHold])
+  return gaze
+}
+
+function Eyes ({ live, talking, onHold, onTap }: { live: boolean, talking: boolean, onHold: boolean, onTap: () => void }) {
+  const gaze = useGaze(onHold)
+  const style = { '--x': `${gaze.x}%`, '--y': `${gaze.y}%` } as React.CSSProperties
+  return (
+    <button className={`face ${talking ? 'talk' : ''}`} style={style} onClick={onTap} aria-label={live ? 'Noor eyes, tap to hang up' : 'Noor eyes, tap to talk'}>
+      <span className='eye'><span className='pupil' /></span>
+      <span className='eye'><span className='pupil' /></span>
+    </button>
+  )
+}
+
 function Console ({ challenge }: { challenge: Challenge }) {
   const agent = useVoiceAgent({ preset: challenge.id })
   const [error, setError] = useState('')
-  const start = () => { setError(''); agent.start().catch((e: Error) => setError(e.message)) }
+  const [panel, setPanel] = useState(false)
+  const live = agent.status === 'connected'
+  const start = () => { setError(''); agent.start().catch((e: Error) => { setError(e.message); setPanel(true) }) }
+  const tap = () => { if (live) void agent.stop(); else if (agent.status !== 'connecting') start() }
   return (
-    <div className='console'>
-      <div>
-        <Controls agent={{ ...agent, start } as never} error={error} />
-        <div className='card' style={{ marginTop: 16 }}>
-          <h3 style={{ fontSize: 14 }} className='prompt'>try saying</h3>
-          {challenge.trySaying.map((t) => <p key={t} dir='auto' className='dim'>“{t}”</p>)}
+    <>
+      <Eyes live={live} talking={live && agent.isSpeaking} onHold={agent.onHold} onTap={tap} />
+      <button className='btn panel-toggle' onClick={() => setPanel(!panel)}>{panel ? '✕ hide panel' : '☰ show panel'}</button>
+      {panel && (
+        <div className='panel'>
+          <h1 style={{ fontSize: 32 }}>{challenge.title}</h1>
+          <p className='dim'>{challenge.pitch}</p>
+          <div className='console'>
+            <div>
+              <Controls agent={{ ...agent, start } as never} error={error} />
+              <div className='card' style={{ marginTop: 16 }}>
+                <h3 style={{ fontSize: 14 }} className='prompt'>try saying</h3>
+                {challenge.trySaying.map((t) => <p key={t} dir='auto' className='dim'>“{t}”</p>)}
+              </div>
+            </div>
+            <Transcript lines={agent.lines} />
+            <div className='card'>
+              <h3 style={{ fontSize: 14 }} className='prompt'>tool calls</h3>
+              {!agent.events.length && <p className='dim'>Noor is voice-only, so this normally stays empty.</p>}
+              {agent.events.map((e, i) => <EventCard key={i} event={e} />)}
+            </div>
+          </div>
         </div>
-      </div>
-      <Transcript lines={agent.lines} />
-      <div className='card'>
-        <h3 style={{ fontSize: 14 }} className='prompt'>tool calls</h3>
-        {!agent.events.length && <p className='dim'>Bookings, routes, checklists, research and handovers appear here.</p>}
-        {agent.events.map((e, i) => <EventCard key={i} event={e} />)}
-      </div>
-    </div>
+      )}
+    </>
   )
 }
 

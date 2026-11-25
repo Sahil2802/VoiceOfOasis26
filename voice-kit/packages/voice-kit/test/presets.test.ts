@@ -114,9 +114,11 @@ describe('robot channel + webhook tools', async () => {
     expect(body.conversationConfig.agent.prompt.tools).toEqual([])
   })
 
-  it('is bilingual, says AI in both greetings and lasts 900 s', () => {
-    expect(preset.languages).toEqual(['en', 'ar'])
+  it('speaks English, Arabic and Hindi, says AI in every greeting and lasts 900 s', () => {
+    expect(preset.languages).toEqual(['en', 'ar', 'hi'])
     expect(preset.firstMessage.en).toMatch(/AI/)
+    expect(preset.firstMessage.hi).toMatch(/AI/)
+    expect(body.conversationConfig.languagePresets).toHaveProperty('hi')
     expect(preset.greeting).toMatch(/AI/)
     expect(preset.maxDurationSeconds).toBe(900)
     expect(preset.systemPrompt).toMatch(/Never say "follow me"/)
