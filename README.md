@@ -9,6 +9,7 @@ Runs on the robot's dev computer, in your own folder on the host (no Docker cont
 | `ghost_sdk.py` | AimDK v1.0.0 calls: `SetMcPresetMotion`, `/face_ui_proxy/play_emoji`, `SetVolume`/`GetVolume`, `SetMicSourceRequest` |
 | `ghost_actions.py` | Agent tool → SDK mapping (gesture/motion ids from the AgiBot docs) |
 | `ghost_events.py` | Polls our server for operator "Arrived" taps |
+| `ghost_turns.py` | Guesses who speaks next (visitor/operator/receptionist) from whom Noor addressed; labels the log and tells the agent |
 | `ghost_audio.py` | Mixes the robot's raw 6-channel microphone to mono (no wake word needed) |
 | `run_on_robot.sh` | One-command launcher for PC2 (env checks, deps, fallback) |
 | `docs/robot-runbook.md` | Step-by-step for the robot slot |
