@@ -49,6 +49,8 @@ import urllib.request
 import numpy as np
 import websocket  # pip3 install websocket-client
 
+import ghost_turns
+
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -111,6 +113,7 @@ class Bridge(Node):
         self.ws = None
         self.connected = False
         self.running = True
+        self.expected = ghost_turns.VISITOR  # who should speak next, guessed from whom Noor addressed
 
         mic_qos = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=500,
                              reliability=QoSReliabilityPolicy.BEST_EFFORT)
@@ -273,10 +276,13 @@ class Bridge(Node):
 
     # ----------------------------------------------------- your logic goes here
     def on_user_text(self, text):
-        log("visitor:", text)
+        self.expected = ghost_turns.speaker(text, self.expected)
+        log(self.expected + ":", text)
 
     def on_agent_text(self, text):
         log("robot:", text)
+        self.expected = ghost_turns.addressed(text)
+        self.send({"type": "contextual_update", "text": ghost_turns.context_note(self.expected)})
 
     def on_tool_call(self, call):
         # A client tool defined in your agent. Reply with a result, for example:
