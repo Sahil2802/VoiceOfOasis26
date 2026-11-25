@@ -138,6 +138,15 @@ describe('robot channel + webhook tools', async () => {
     expect(text).not.toMatch(/wheels/)
   })
 
+  it('fills the wait for the operator with sourced "Did you know" DSO facts on silence', () => {
+    const text = body.conversationConfig.agent.prompt.prompt
+    expect(preset.knowledge.length).toBeGreaterThanOrEqual(8)
+    expect(text).toContain('# Knowledge')
+    expect(text).toMatch(/Did you know/)
+    expect(text).toMatch(/"\.\.\."/)
+    expect(text).toMatch(/never repeat a fact/i)
+  })
+
   it('opens with a short greeting', () => {
     expect(preset.firstMessage.en!.split(/[.?!]/).filter(Boolean).length).toBeLessThanOrEqual(2)
   })

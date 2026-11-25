@@ -114,6 +114,7 @@ class Bridge(Node):
         self.connected = False
         self.running = True
         self.expected = ghost_turns.VISITOR  # who should speak next, guessed from whom Noor addressed
+        self.last_user = ""
 
         mic_qos = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=500,
                              reliability=QoSReliabilityPolicy.BEST_EFFORT)
@@ -276,12 +277,13 @@ class Bridge(Node):
 
     # ----------------------------------------------------- your logic goes here
     def on_user_text(self, text):
+        self.last_user = text
         self.expected = ghost_turns.speaker(text, self.expected)
         log(self.expected + ":", text)
 
     def on_agent_text(self, text):
         log("robot:", text)
-        self.expected = ghost_turns.addressed(text)
+        self.expected = ghost_turns.next_expected(text, self.expected, self.last_user)
         self.send({"type": "contextual_update", "text": ghost_turns.context_note(self.expected)})
 
     def on_tool_call(self, call):

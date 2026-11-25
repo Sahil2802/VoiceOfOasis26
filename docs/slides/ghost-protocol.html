@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ghost Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&family=Noto+Naskh+Arabic:wght@500&family=Noto+Sans+Devanagari:wght@500&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   THEME TOKENS: desert night, transcript colours per speaker
+   ========================================================= */
+:root {
+    --stage-bg: #120E0A;
+    --slide-bg: radial-gradient(1200px 700px at 85% 15%, #2a1d12 0%, #120E0A 62%);
+    --sand: #EADBC0;
+    --sand-2: #d8c9ad;
+    --dim: #8f7f68;
+    --rule: #ffffff16;
+    --amber: #F2A541;   /* Noor */
+    --teal: #4FC1B0;    /* operator */
+    --rose: #E7786B;    /* receptionist */
+    --serif: 'Instrument Serif', serif;
+    --mono: 'JetBrains Mono', monospace;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+/* =========================================================
+   FIXED STAGE BASE (viewport-base.css, included in full)
+   ========================================================= */
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-viewport { position: fixed; inset: 0; overflow: hidden; background: var(--stage-bg, #000); }
+.deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 0 0; background: var(--slide-bg, #fff); }
+.slide { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; display: block; visibility: hidden; opacity: 0; pointer-events: none; background: var(--slide-bg, #fff); }
+.slide.active, .slide.visible { visibility: visible; opacity: 1; pointer-events: auto; z-index: 1; }
+img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+.deck-controls { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 1000; }
+@media print {
+    html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+    .deck-viewport { position: static; overflow: visible; background: #fff; }
+    .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+    .slide { position: relative; display: block !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; width: 1920px; height: 1080px; break-after: page; page-break-after: always; }
+    .slide:last-child { break-after: auto; page-break-after: auto; }
+    .deck-controls { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+}
+
+/* =========================================================
+   SHARED SLIDE CHROME: dot grid, kicker, footer, reveals
+   ========================================================= */
+.slide { color: var(--sand); font-family: var(--mono); }
+.slide::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(#ffffff10 1.5px, transparent 1.6px);
+    background-size: 36px 36px;
+    mask-image: linear-gradient(90deg, transparent, #000 65%);
+}
+.kicker { position: absolute; left: 120px; top: 96px; font: 600 22px var(--mono); letter-spacing: .2em; color: var(--amber); text-transform: uppercase; }
+.foot {
+    position: absolute; left: 120px; right: 120px; bottom: 64px;
+    display: flex; justify-content: space-between;
+    font: 400 20px var(--mono); color: var(--dim); letter-spacing: .1em; text-transform: uppercase;
+}
+.ar { font-family: 'Noto Naskh Arabic', serif; }
+.hi { font-family: 'Noto Sans Devanagari', sans-serif; }
+.v { color: var(--sand); } .r { color: var(--amber); } .o { color: var(--teal); } .s { color: var(--rose); }
+
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+.slide.visible .reveal { opacity: 1; transform: none; }
+.d1 { transition-delay: .1s; } .d2 { transition-delay: .25s; } .d3 { transition-delay: .4s; }
+.d4 { transition-delay: .55s; } .d5 { transition-delay: .7s; } .d6 { transition-delay: .85s; } .d7 { transition-delay: 1s; }
+
+/* =========================================================
+   SLIDE 1: title + live transcript
+   ========================================================= */
+.s1 h1 { position: absolute; left: 112px; top: 160px; margin: 0; font: 400 240px/0.9 var(--serif); letter-spacing: -.02em; }
+.s1 h1 em { color: var(--amber); }
+.s1 .lede { position: absolute; left: 120px; top: 650px; width: 760px; font: 400 42px/1.28 var(--serif); color: var(--sand-2); }
+.log { position: absolute; left: 1000px; top: 220px; width: 800px; font: 400 26px/1.45 var(--mono); }
+.log .line { display: grid; grid-template-columns: 230px 1fr; gap: 20px; padding: 16px 0; border-top: 1px solid var(--rule); }
+.log .who { font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 21px; padding-top: 4px; }
+
+/* =========================================================
+   SLIDE 2: the turn-taking flow
+   ========================================================= */
+.title { position: absolute; left: 120px; top: 150px; width: 1680px; margin: 0; font: 400 92px/1.02 var(--serif); letter-spacing: -.01em; }
+.title em { color: var(--amber); }
+.flow { position: absolute; left: 120px; right: 120px; top: 410px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; }
+.step { border-top: 3px solid currentColor; padding-top: 22px; position: relative; }
+.step .n { font: 600 20px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+.step .said { margin-top: 16px; font: 400 34px/1.18 var(--serif); color: var(--sand); }
+.step .note { margin-top: 14px; font: 400 19px/1.45 var(--mono); color: var(--dim); }
+.rules { position: absolute; left: 120px; right: 120px; top: 790px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.rule { background: #ffffff08; border: 1px solid var(--rule); padding: 24px 26px; font: 400 22px/1.4 var(--mono); color: var(--sand-2); }
+.rule b { display: block; color: var(--amber); font-weight: 600; font-size: 18px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 8px; }
+
+/* =========================================================
+   SLIDE 3: what we built (pipeline + four facts)
+   ========================================================= */
+.pipe { position: absolute; left: 120px; top: 360px; width: 760px; }
+.node { display: grid; grid-template-columns: 56px 1fr; gap: 22px; align-items: start; }
+.node .dot { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--amber); margin: 10px 0 0 16px; }
+.node h3 { margin: 0; font: 400 40px/1.1 var(--serif); color: var(--sand); }
+.node p { margin: 6px 0 0; font: 400 20px/1.45 var(--mono); color: var(--dim); }
+.link { width: 3px; height: 34px; background: linear-gradient(var(--amber), #F2A54133); margin: 6px 0 6px 28px; }
+.facts { position: absolute; left: 960px; top: 360px; width: 840px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.fact { border: 1px solid var(--rule); background: #ffffff07; padding: 28px 30px; min-height: 250px; box-sizing: border-box; }
+.fact b { display: block; font: 400 38px/1.1 var(--serif); color: var(--amber); margin-bottom: 14px; }
+.fact p { margin: 0; font: 400 21px/1.5 var(--mono); color: var(--sand-2); }
+
+/* =========================================================
+   DECK CHROME: inline edit toggle
+   ========================================================= */
+.edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 10000; cursor: pointer; }
+.edit-toggle { position: fixed; top: 16px; left: 16px; z-index: 10001; opacity: 0; pointer-events: none; transition: opacity .3s ease;
+    background: #2a1d12; color: var(--sand); border: 1px solid var(--amber); padding: 8px 14px; font: 600 13px var(--mono); cursor: pointer; }
+.edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+[contenteditable="true"] { outline: 1px dashed #F2A54188; outline-offset: 4px; }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+    <!-- ===================== SLIDE 1 ===================== -->
+    <section class="slide s1 active">
+        <div class="kicker reveal d1">Ghost Protocol · Voice of the Oasis</div>
+        <h1 class="reveal d2">Noor<br><em>asks.</em></h1>
+        <div class="lede reveal d3">An AI voice guide on a humanoid robot. She doesn’t know the building, so she asks the people who do, in English, Arabic or Hindi.</div>
+        <div class="log">
+            <div class="line reveal d2"><span class="who v">visitor</span><span class="hi">मुझे meeting room one जाना है।</span></div>
+            <div class="line reveal d3"><span class="who r">noor</span><span>Operator, please take us to the nearest reception.</span></div>
+            <div class="line reveal d4"><span class="who o">operator</span><span>You are at the reception.</span></div>
+            <div class="line reveal d5"><span class="who r">noor</span><span>Excuse me, I’m Noor, the AI on this robot. How do we get to meeting room one?</span></div>
+            <div class="line reveal d6"><span class="who s">receptionist</span><span class="hi">हाँ, meeting room reception के सामने ही है।</span></div>
+            <div class="line reveal d7"><span class="who r">noor</span><span>Operator, meeting room one is just in front of reception.</span></div>
+        </div>
+        <div class="foot"><span>Dtec, Dubai Silicon Oasis</span><span>EN · <span class="ar">عربي</span> · <span class="hi">हिन्दी</span></span><span>01 / 03</span></div>
+    </section>
+
+    <!-- ===================== SLIDE 2 ===================== -->
+    <section class="slide s2">
+        <div class="kicker reveal d1">How a visit works</div>
+        <h2 class="title reveal d2">One microphone, four people. <em>Noor keeps the turns.</em></h2>
+        <div class="flow">
+            <div class="step v reveal d2"><div class="n">01 · Visitor</div><div class="said">“Where is meeting room one?”</div><div class="note">Any of English, Arabic, Hindi. Noor answers in their language.</div></div>
+            <div class="step r reveal d3"><div class="n">02 · Noor</div><div class="said">“Operator, take us to the nearest reception.”</div><div class="note">She never guesses where a place is.</div></div>
+            <div class="step o reveal d4"><div class="n">03 · Operator</div><div class="said">“You are at the reception.”</div><div class="note">The operator drives the robot and confirms arrival.</div></div>
+            <div class="step r reveal d5"><div class="n">04 · Noor</div><div class="said">“Excuse me, I’m Noor, the AI on this robot…”</div><div class="note">Asks staff the way, then reads it back.</div></div>
+            <div class="step s reveal d6"><div class="n">05 · Receptionist</div><div class="said">“Right in front of reception.”</div><div class="note">Real directions from a real person.</div></div>
+            <div class="step r reveal d7"><div class="n">06 · Noor</div><div class="said">Relays the route to the operator, then tells the visitor.</div><div class="note">Word for word what staff said.</div></div>
+        </div>
+        <div class="rules">
+            <div class="rule reveal d4"><b>Honest</b>Always says she is an AI.</div>
+            <div class="rule reveal d5"><b>No guessing</b>Never invents directions, prices or times.</div>
+            <div class="rule reveal d6"><b>No “follow me”</b>The operator moves the robot, not Noor.</div>
+            <div class="rule reveal d7"><b>One at a time</b>Each line is for exactly one person.</div>
+        </div>
+        <div class="foot"><span>Ghost Protocol</span><span>Turn order</span><span>02 / 03</span></div>
+    </section>
+
+    <!-- ===================== SLIDE 3 ===================== -->
+    <section class="slide s3">
+        <div class="kicker reveal d1">What we built</div>
+        <h2 class="title reveal d2">Runs on the robot today. <em>Nothing faked.</em></h2>
+        <div class="pipe">
+            <div class="node reveal d2"><span class="dot"></span><div><h3>Robot microphone</h3><p>Raw 6-channel mic mixed to mono. No wake word; head touch wakes Noor.</p></div></div>
+            <div class="link reveal d3"></div>
+            <div class="node reveal d3"><span class="dot"></span><div><h3>Ghost bridge · ROS 2</h3><p>Streams audio both ways, mutes the mic while Noor talks, reconnects on its own.</p></div></div>
+            <div class="link reveal d4"></div>
+            <div class="node reveal d4"><span class="dot"></span><div><h3>ElevenLabs agent</h3><p>Speech-to-text, LLM and voice in one agent. English, Arabic, Hindi.</p></div></div>
+            <div class="link reveal d5"></div>
+            <div class="node reveal d5"><span class="dot"></span><div><h3>Robot speaker</h3><p>16 kHz PCM straight to the AgiBot X2’s speaker.</p></div></div>
+        </div>
+        <div class="facts">
+            <div class="fact reveal d3"><b>Who’s talking?</b><p>The bridge infers the next speaker from whom Noor just addressed, labels the log, and passes it to the agent as a hidden note.</p></div>
+            <div class="fact reveal d4"><b>Three languages</b><p>Hindi that comes through in Urdu script is answered in Hindi, not Arabic.</p></div>
+            <div class="fact reveal d5"><b>Pure voice</b><p>No tools to wire on the robot. If the full bridge fails, a plain audio bridge takes over.</p></div>
+            <div class="fact reveal d6"><b>Open stack</b><p>Python + ROS 2 on the robot, TypeScript agent config, Next.js robot face.</p></div>
+        </div>
+        <div class="foot"><span>AgiBot X2 × ElevenLabs</span><span>Ghost Protocol</span><span>03 / 03</span></div>
+    </section>
+
+</main>
+</div>
+
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)">EDIT</button>
+
+<script>
+/* =========================================================
+   SLIDE PRESENTATION CONTROLLER
+   Stage scaling, keyboard / wheel / swipe navigation.
+   ========================================================= */
+class SlidePresentation {
+    constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.stage = document.getElementById('deckStage');
+        this.current = 0;
+        this.lastWheel = 0;
+        this.setupStageScale();
+        this.setupNav();
+        this.show(0);
+    }
+    setupStageScale() {
+        const scale = () => {
+            const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+            this.stage.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px, ${(innerHeight - 1080 * k) / 2}px) scale(${k})`;
+        };
+        scale();
+        addEventListener('resize', scale);
+    }
+    setupNav() {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.isContentEditable) return;
+            if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); this.show(this.current + 1); }
+            if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); this.show(this.current - 1); }
+        });
+        addEventListener('wheel', (e) => {
+            const now = Date.now();
+            if (now - this.lastWheel < 700 || Math.abs(e.deltaY) < 20) return;
+            this.lastWheel = now;
+            this.show(this.current + (e.deltaY > 0 ? 1 : -1));
+        }, { passive: true });
+        let x0 = null;
+        addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+        addEventListener('touchend', (e) => {
+            if (x0 === null) return;
+            const dx = e.changedTouches[0].clientX - x0;
+            if (Math.abs(dx) > 50) this.show(this.current + (dx < 0 ? 1 : -1));
+            x0 = null;
+        });
+    }
+    show(i) {
+        this.current = Math.max(0, Math.min(i, this.slides.length - 1));
+        this.slides.forEach((s, n) => {
+            s.classList.toggle('active', n === this.current);
+            s.classList.toggle('visible', n === this.current);
+        });
+    }
+}
+new SlidePresentation();
+
+/* =========================================================
+   INLINE EDITING: E key or top-left hotzone; Ctrl+S downloads an edited copy
+   ========================================================= */
+const editor = {
+    isActive: false,
+    targets: () => document.querySelectorAll('.slide h1, .slide h2, .slide h3, .slide p, .kicker, .lede, .said, .note, .rule, .log .line span:last-child'),
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        this.targets().forEach((el) => el.setAttribute('contenteditable', this.isActive));
+        document.getElementById('editToggle').classList.toggle('active', this.isActive);
+    },
+    download() {
+        const wasActive = this.isActive;
+        this.targets().forEach((el) => el.removeAttribute('contenteditable'));
+        const blob = new Blob(['<!doctype html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
+        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'ghost-protocol.html' });
+        a.click();
+        if (wasActive) this.targets().forEach((el) => el.setAttribute('contenteditable', true));
+    }
+};
+
+const toggle = document.getElementById('editToggle');
+const hotzone = document.querySelector('.edit-hotzone');
+let hideTimeout = null;
+toggle.addEventListener('click', () => editor.toggleEditMode());
+hotzone.addEventListener('click', () => editor.toggleEditMode());
+hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); toggle.classList.add('show'); });
+hotzone.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) toggle.classList.remove('show'); }, 400); });
+toggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+toggle.addEventListener('mouseleave', () => { hideTimeout = setTimeout(() => { if (!editor.isActive) toggle.classList.remove('show'); }, 400); });
+document.addEventListener('keydown', (e) => {
+    if ((e.key === 'e' || e.key === 'E') && !e.target.isContentEditable) editor.toggleEditMode();
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); editor.download(); }
+});
+</script>
+</body>
+</html>
