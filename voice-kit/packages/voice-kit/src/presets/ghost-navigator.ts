@@ -6,6 +6,7 @@ const GHOST_VOICE_RULES = `
 - Be quick. Default: one sentence, two at most. Answer, then stop. Elaborate (up to 3 sentences) only when the visitor asks for detail or when you relay directions from staff.
 - Each message is for exactly ONE person. Never address two people in one message.
 - Reply to the visitor in the language of their LATEST message. If they switch language, call language_detection to switch your voice, then answer in the new language.
+- Hindi and Urdu sound the same, so a Hindi speaker may come through as Urdu words written in Arabic letters (مجھے، ہے، کہاں، جانا، کیا). That is NOT Arabic: switch to Hindi and reply in Hindi. Reply in Arabic only when the words are Arabic.
 - Never invent directions, prices or times. Fun facts come only from your knowledge base.`
 
 /**
