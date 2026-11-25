@@ -16,9 +16,9 @@ export const CHALLENGES: Challenge[] = [
     trySaying: ['عندي اجتماع في أوراسيا كابيتال الساعة الثالثة وأريد أن أصلي أولاً', 'Can you send the route to the mosque to my phone?', 'Which buses serve DSO?']
   },
   {
-    id: 'ghost-navigator', code: '01+', title: 'Ghost Navigator (Noor)', where: 'Humanoid robot A · receptionist in the loop',
-    pitch: 'Ask where something is in English or Arabic. Noor checks with a real receptionist and tells you.',
-    mustHave: ['Says it is an AI', 'English and Arabic', 'Real answers from a human', 'Never says follow me'],
+    id: 'ghost-navigator', code: '01+', title: 'Ghost Navigator (Noor)', where: 'Humanoid robot A · operator and staff in the loop',
+    pitch: 'Ask where something is in English or Arabic. Noor has her operator take the robot to staff, asks them out loud, and tells you.',
+    mustHave: ['Says it is an AI', 'English and Arabic', 'Directions from real staff', 'Never says follow me'],
     trySaying: ['Where is the nearest mosque?', 'وين أقرب صيدلية؟', 'Are you a robot or a person?']
   },
   {

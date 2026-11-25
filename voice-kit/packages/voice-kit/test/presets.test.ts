@@ -114,9 +114,10 @@ describe('robot channel + webhook tools', async () => {
     expect(body.conversationConfig.agent.prompt.tools).toEqual([])
   })
 
-  it('speaks English, Arabic and Hindi, says AI in the greetings and lasts 900 s', () => {
+  it('speaks English, Arabic and Hindi, says AI in every greeting and lasts 900 s', () => {
     expect(preset.languages).toEqual(['en', 'ar', 'hi'])
     expect(preset.firstMessage.en).toMatch(/AI/)
+    expect(preset.firstMessage.hi).toMatch(/AI/)
     expect(preset.firstMessage.hi).toMatch(/[ऀ-ॿ]/)
     expect(body.conversationConfig.agent.language).toBe('ar')
     expect(Object.keys(body.conversationConfig.languagePresets)).toEqual(['en', 'hi'])
