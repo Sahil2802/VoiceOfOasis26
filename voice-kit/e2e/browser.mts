@@ -17,8 +17,8 @@ async function micWav (text: string, lang: 'en' | 'ar') {
   return `${OUT}/mic.wav`
 }
 
-const preset = process.argv[2] ?? 'hala'
-const question = process.argv[3] ?? 'Hello, I need to renew my employee visa. What documents do I need?'
+const preset = 'ghost-navigator' // the demo now only serves Noor
+const question = process.argv[2] ?? 'Where is the nearest mosque?'
 const wav = await micWav(question, /[؀-ۿ]/.test(question) ? 'ar' : 'en')
 const browser = await chromium.launch({
   args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-audio-capture=${wav}`, '--autoplay-policy=no-user-gesture-required']
@@ -26,7 +26,8 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 1360, height: 900 } })
 await page.context().grantPermissions(['microphone'], { origin: BASE })
 page.on('console', (m) => { if (m.type() === 'error') console.log('console error:', m.text().slice(0, 200)) })
-await page.goto(`${BASE}/agents/${preset}`)
+await page.goto(BASE) // robot face; console sits behind the panel toggle
+await page.getByRole('button', { name: /show panel/ }).click()
 await page.getByRole('button', { name: /start talking/ }).click()
 await page.waitForSelector('.line.agent', { timeout: 20000 })
 await page.waitForSelector('.line.user', { timeout: 40000 })
