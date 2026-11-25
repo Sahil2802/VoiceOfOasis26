@@ -122,6 +122,7 @@ describe('robot channel + webhook tools', async () => {
     expect(body.conversationConfig.agent.language).toBe('ar')
     expect(Object.keys(body.conversationConfig.languagePresets)).toEqual(['en', 'hi'])
     expect(preset.systemPrompt).toMatch(/Hindi/)
+    expect(body.conversationConfig.agent.prompt.prompt).toMatch(/Urdu words written in Arabic letters/)
     expect(preset.greeting).toMatch(/AI/)
     expect(preset.maxDurationSeconds).toBe(900)
     expect(preset.systemPrompt).toMatch(/Never say "follow me"/)

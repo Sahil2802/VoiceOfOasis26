@@ -6,6 +6,7 @@ Based on the organisers' tested recipe (24.11, ElevenLabs agent talking on the r
 ## Before the slot (laptop)
 1. Provision the agent (it needs only `ELEVENLABS_API_KEY`; the key must allow Conversational AI read + write):
    `cd voice-kit && npx tsx --env-file=.env.local scripts/provision-ghost.mts`. It prints `ROBOT_AGENT_ID=...`. Use that one on the robot.
+   **Re-run this after every change to Noor's prompt** (`ghost-navigator.ts`): the robot keeps the old behaviour until you do. The ID stays the same.
    Check the knowledge base is attached to the **robot** agent too (web and robot are separate agents).
 2. Optional, only for operator "Arrived" taps: deploy `voice-kit` (Render, one instance) with `RECEPTION_SECRET` and `ROBOT_TOKEN`, then
    `curl "https://<render>/robot/events?after=0&k=$ROBOT_TOKEN"` -> `{"seq":0,"events":[]}`. Without it Noor still works: the operator just says "Noor, we're at reception".
